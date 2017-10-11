@@ -45,7 +45,39 @@ const win_conditions = [
 ];
 
 const reducer = (state = initial_data, action) => {
-    
+    if (state.current_state === STATE_PLAYING) {
+        if (action.type === ACTION_TYPE_PLACE) {
+            if (possible_slots.indexOf(action.data) >= 0) {
+                if (state[action.data] === TOKEN_NONE) {
+                    state = {...state};
+                    state[action.data] = state.current_player;
+                    state.current_player = state.current_player === TOKEN_X ? TOKEN_O : TOKEN_X;
+                    // check winning condition
+                    const winning_line = win_conditions.find(([a, b, c]) => {
+                        return state[a] !== TOKEN_NONE && state[a] === state[b] && state[b] === state[c];
+                    });
+                    if (winning_line) {
+                        const winner = state[winning_line[0]];
+                        if (winner === TOKEN_X) state.current_state = STATE_END_X;
+                        else state.current_state = STATE_END_O;
+                        state.winning_line = winning_line;
+                    } else {
+                        // check draw condition
+                        const unfilled = possible_slots.find((slot) => state[slot] === TOKEN_NONE);
+                        if (!unfilled) {
+                            state.current_state = STATE_END_DRAW;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (action.type === ACTION_TYPE_RESET) {
+        const new_start_player = state.start_player === TOKEN_X ? TOKEN_O : TOKEN_X;
+        state = {...initial_data};
+        state.start_player = new_start_player;
+        state.current_player = state.start_player;
+    }
     return state;
 };
 
